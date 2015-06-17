@@ -31,25 +31,27 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 
 
 
-public class Hashmin
+public class SSSP
 {
-	public static final String COLOR = "COLOR";
+	public static final String DIST = "DIST";
 	
 	public static class FirstMapper extends MapReduceBase implements
 			Mapper<Object, Text, IntWritable, IntWritable> {
-	
+		
+		private int source = -1;
+		public void configure(JobConf job) {
+			source = Integer.parseInt(job.get("sourceID"));
+		}
 		public void map(Object key, Text value, OutputCollector<IntWritable, IntWritable> output, Reporter reporter) throws IOException {
 			
 			//vid neighbors_num n1 n2 ...
 			String[] tokens = value.toString().split("\\s+");
 			IntWritable SourceId = new IntWritable(Integer.parseInt(tokens[0]));
-			
-			int minColor = Integer.parseInt(tokens[0]);
-			for (int i = 2; i < tokens.length; i++){
-				int color = Integer.parseInt(tokens[i]);
-				if (color < minColor) minColor = color;
-			}
-			output.collect(SourceId, new IntWritable(minColor));
+			int sid = SourceId.get();
+			if (sid == source )
+				output.collect(SourceId, new IntWritable(0));
+			else
+				output.collect(SourceId, new IntWritable(Integer.MAX_VALUE));
 		}
 	}
 	
@@ -57,11 +59,14 @@ public class Hashmin
             Reducer<IntWritable, IntWritable, IntWritable, Text> { 			
             
         public void reduce(IntWritable key, Iterator<IntWritable> values, OutputCollector<IntWritable, Text> output, Reporter reporter) throws IOException {
-        	int color = -1;
+        	int dist = -1;
         	if (values.hasNext()) {
-        		color = values.next().get();
+        		dist = values.next().get();
         	}
-        	output.collect(key, new Text(Integer.toString(color)+" 1"+COLOR) );
+        	if (dist == 0)
+        		output.collect(key, new Text(Integer.toString(dist)+" 1"+DIST) );
+        	else
+        		output.collect(key, new Text(Integer.toString(dist)+" 0"+DIST) );
         }   
     }
 	
@@ -71,18 +76,19 @@ public class Hashmin
 	
 		public void map(Object key, Text value, OutputCollector<IntWritable, Text> output, Reporter reporter) throws IOException {
 			
+			//input:
 			//vid neighbors_num n1 n2 ...
-			//vid color 1/0 "COLOR"
+			//vid dist 1/0 "DIST"
 			String str = value.toString();
-			if (str.endsWith(COLOR)) {
-				//color table
-				String[] tokens = str.substring(0, str.length()-5).split("\\s+");
+			if (str.endsWith(DIST)) {
+				//dist table
+				String[] tokens = str.substring(0, str.length()-4).split("\\s+");
 				int change = Integer.parseInt(tokens[2]);
 				if (change == 1)
 				{
 					IntWritable SourceId = new IntWritable(Integer.parseInt(tokens[0]));
 					StringBuilder sb = new StringBuilder();
-					sb.append(tokens[1]); sb.append(" "); sb.append(tokens[2]);sb.append(COLOR);
+					sb.append(tokens[1]); sb.append(" "); sb.append(tokens[2]);sb.append(DIST);
 					output.collect(SourceId, new Text(sb.toString()));
 				}
 			}
@@ -105,14 +111,14 @@ public class Hashmin
             
         public void reduce(IntWritable key, Iterator<Text> values, OutputCollector<IntWritable, IntWritable> output, Reporter reporter) throws IOException {
         	
-        	int color = -1;
+        	int dist = -1;
         	ArrayList<String> neighbors = new ArrayList<String>();
         	while (values.hasNext()){
         		String str = values.next().toString();
-        		if (str.endsWith(COLOR)){
-        			//color table
-        			String[] tmp = str.substring(0, str.length()-5).split("\\s+");
-        			color = Integer.parseInt(tmp[0]);
+        		if (str.endsWith(DIST)){
+        			//dist table
+        			String[] tmp = str.substring(0, str.length()-4).split("\\s+");
+        			dist = Integer.parseInt(tmp[0]);
         		}
         		else{
         			//adj table
@@ -124,14 +130,14 @@ public class Hashmin
         	int num = Integer.parseInt(neighbors.get(0));
         	if (num == 0) return;
         	
-        	if (color != -1)
+        	if (dist != -1)
         	{
         		//send messages
         		for (int i = 1; i < neighbors.size(); ++ i)
         		{
         			IntWritable TargetId = new IntWritable(Integer.parseInt(neighbors.get(i)));
         		
-        			output.collect(TargetId, new IntWritable(color));
+        			output.collect(TargetId, new IntWritable(dist+1));
         		}
         	}
         }
@@ -141,8 +147,8 @@ public class Hashmin
 			Mapper<Object, Text, IntWritable, Text> {
 		
 		public void map(Object key, Text value, OutputCollector<IntWritable, Text> output, Reporter reporter) throws IOException {	
-			//id color
-			//id color 1/0 "COLOR"
+			//id newDist
+			//id dist 1/0 "DIST"
 			String[] tokens = value.toString().split("\\s+");
 			IntWritable SourceId = new IntWritable(Integer.parseInt(tokens[0]));
 			StringBuilder sb = new StringBuilder();
@@ -158,31 +164,31 @@ public class Hashmin
             Reducer<IntWritable, Text, IntWritable, Text> { 			
             
         public void reduce(IntWritable key, Iterator<Text> values, OutputCollector<IntWritable, Text> output, Reporter reporter) throws IOException {
-        	int color = -1;
-        	int newColor = Integer.MAX_VALUE;
+        	int dist = -1;
+        	int newDist = Integer.MAX_VALUE;
         	int change = 0;
         	while (values.hasNext()){
         		String str = values.next().toString();
-        		if (str.endsWith(COLOR)){
-        			//color table
-        			String[] tmp = str.substring(0, str.length()-5).split("\\s+");
-        			color = Integer.parseInt(tmp[0]);
+        		if (str.endsWith(DIST)){
+        			//dist table
+        			String[] tmp = str.substring(0, str.length()-4).split("\\s+");
+        			dist = Integer.parseInt(tmp[0]);
         		}
         		else{
         			//messages table
         			String[] tmp = str.split("\\s+");
         			for (String i : tmp)
         			{
-        				int tmpColor = Integer.parseInt(i);
-        				if (tmpColor < newColor) newColor = tmpColor; 
+        				int tmpDist = Integer.parseInt(i);
+        				if (tmpDist < newDist) newDist = tmpDist; 
         			}
         		}
         	}
-        	if (newColor < color) {
-        		color = newColor;
+        	if (newDist < dist) {
+        		dist = newDist;
         		change = 1;
         	}
-        	output.collect(key, new Text(Integer.toString(color) + " " + Integer.toString(change)+COLOR));
+        	output.collect(key, new Text(Integer.toString(dist) + " " + Integer.toString(change)+DIST));
         }   
     }
     
@@ -190,15 +196,14 @@ public class Hashmin
             Reducer<IntWritable, Text, IntWritable, Text> { 			
             
         public void reduce(IntWritable key, Iterator<Text> values, OutputCollector<IntWritable, Text> output, Reporter reporter) throws IOException {
-        	int color = -1;
-        	int newColor = Integer.MAX_VALUE;
-        	int change = 0;
+        	int dist = -1;
+        	int newDist = Integer.MAX_VALUE;
         	while (values.hasNext()){
         		String str = values.next().toString();
-        		if (str.endsWith(COLOR)){
-        			//color table
-        			String[] tmp = str.substring(0, str.length()-5).split("\\s+");
-        			color = Integer.parseInt(tmp[0]);
+        		if (str.endsWith(DIST)){
+        			//dist table
+        			String[] tmp = str.substring(0, str.length()-4).split("\\s+");
+        			dist = Integer.parseInt(tmp[0]);
         			
         			output.collect(key, new Text(str));
         		}
@@ -207,13 +212,13 @@ public class Hashmin
         			String[] tmp = str.split("\\s+");
         			for (String i : tmp)
         			{
-        				int tmpColor = Integer.parseInt(i);
-        				if (tmpColor < newColor) newColor = tmpColor; 
+        				int tmpDist = Integer.parseInt(i);
+        				if (tmpDist < newDist) newDist = tmpDist; 
         			}
         		}
         	}
-        	if (newColor < Integer.MAX_VALUE) {
-        		output.collect(key, new Text(Integer.toString(newColor)));
+        	if (newDist < Integer.MAX_VALUE) {
+        		output.collect(key, new Text(Integer.toString(newDist)));
         	}
         }   
     }
@@ -222,9 +227,13 @@ public class Hashmin
     	
         String inputPath = args[0];
         String outputPath = args[1];
+        String query = args[2];
+        
         //step 1
-        JobConf conf0 = new JobConf(Hashmin.class);
-        conf0.setJobName("hashmin Step1");
+        JobConf conf0 = new JobConf(SSSP.class);
+        conf0.setJobName("SSSP Step1");
+        //set argument
+        conf0.set("sourceID", query);
         
         conf0.setOutputKeyClass(IntWritable.class);
         conf0.setOutputValueClass(Text.class);
@@ -264,12 +273,12 @@ public class Hashmin
     	conf2.setInputFormat(TextInputFormat.class);
  		conf2.setOutputFormat(TextOutputFormat.class);
  		
- 		JobConf conf = new JobConf(Hashmin.class);
- 		conf.setJobName("Hashmin");
- 		conf.setLoopInputOutput(HashminLoopInputOutput.class);
-        conf.setLoopReduceCacheSwitch(HashminReduceCacheSwitch.class);
-        conf.setLoopReduceCacheFilter(HashminReduceCacheFilter.class);
-        conf.setLoopStepHook(HashminStepHook.class);
+ 		JobConf conf = new JobConf(SSSP.class);
+ 		conf.setJobName("SSSP");
+ 		conf.setLoopInputOutput(SSSPLoopInputOutput.class);
+        conf.setLoopReduceCacheSwitch(SSSPReduceCacheSwitch.class);
+        conf.setLoopReduceCacheFilter(SSSPReduceCacheFilter.class);
+        conf.setLoopStepHook(SSSPStepHook.class);
         conf.setInputPath(inputPath);
         conf.setOutputPath(outputPath);
         

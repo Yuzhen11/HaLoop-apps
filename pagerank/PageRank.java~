@@ -135,11 +135,8 @@ public class PageRank
         public void reduce(IntWritable key, Iterator<FloatWritable> values, OutputCollector<IntWritable, Text> output, Reporter reporter) throws IOException {
         	
         	float sum = 0.0f;
-        	System.out.println("!");
-        	System.out.println(key);
         	while (values.hasNext()) {
         		sum += values.next().get();
-        		System.out.println(sum);
         	}
         	output.collect(key, new Text(Float.toString(0.85f*sum+0.15f)+RANK) );
         }   
@@ -225,7 +222,6 @@ public class PageRank
  		conf1.setReducerClass(JoinReducer.class);
     	conf1.setInputFormat(TextInputFormat.class);
  		conf1.setOutputFormat(TextOutputFormat.class);
- 		//conf1.setPartitionerClass(FirstPartitioner.class);
  		
  		JobConf conf2 = new JobConf();
     	conf2.setOutputKeyClass(IntWritable.class);

@@ -222,7 +222,6 @@ public class PageRank
  		conf1.setReducerClass(JoinReducer.class);
     	conf1.setInputFormat(TextInputFormat.class);
  		conf1.setOutputFormat(TextOutputFormat.class);
- 		//conf1.setPartitionerClass(FirstPartitioner.class);
  		
  		JobConf conf2 = new JobConf();
     	conf2.setOutputKeyClass(IntWritable.class);

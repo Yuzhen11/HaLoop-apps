@@ -199,6 +199,8 @@ public class Hashmin
         			//color table
         			String[] tmp = str.substring(0, str.length()-5).split("\\s+");
         			color = Integer.parseInt(tmp[0]);
+        			
+        			output.collect(key, new Text(str));
         		}
         		else{
         			//messages table
@@ -210,11 +212,9 @@ public class Hashmin
         			}
         		}
         	}
-        	if (newColor < color) {
-        		color = newColor;
-        		change = 1;
+        	if (newColor < Integer.MAX_VALUE) {
+        		output.collect(key, new Text(Integer.toString(newColor)));
         	}
-        	output.collect(key, new Text(Integer.toString(color) + " " + Integer.toString(change)+COLOR));
         }   
     }
     
@@ -259,7 +259,8 @@ public class Hashmin
         conf2.setMapOutputValueClass(Text.class);
         conf2.setMapperClass(AggMapper.class);
  		conf2.setReducerClass(AggReducer.class);
- 		//conf2.setCombinerClass(AggCombiner.class);
+ 		//combiner
+ 		conf2.setCombinerClass(AggCombiner.class);
     	conf2.setInputFormat(TextInputFormat.class);
  		conf2.setOutputFormat(TextOutputFormat.class);
  		
