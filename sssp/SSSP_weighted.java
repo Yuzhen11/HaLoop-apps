@@ -31,7 +31,7 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 
 
 
-public class SSSP
+public class SSSP_weighted
 {
 	public static final String DIST = "DIST";
 	public static final double MAX_DOUBLE = 1000000000;
@@ -78,7 +78,7 @@ public class SSSP
 		public void map(Object key, Text value, OutputCollector<IntWritable, Text> output, Reporter reporter) throws IOException {
 			
 			//input:
-			//vid neighbors_num n1 n2 ...
+			//vid neighbors_num n1 w1 n2 w2 ...
 			//vid dist 1/0 "DIST"
 			String str = value.toString();
 			if (str.endsWith(DIST)) {
@@ -133,12 +133,12 @@ public class SSSP
         	
         	if (dist != MAX_DOUBLE)
         	{
-        		//send messages
-        		for (int i = 1; i < neighbors.size(); ++ i)
+        		//send messages   ---------modified for weighted graph
+        		for (int i = 1; i < neighbors.size(); i += 2)
         		{
         			IntWritable TargetId = new IntWritable(Integer.parseInt(neighbors.get(i)));
         		
-        			output.collect(TargetId, new DoubleWritable(dist+1));
+        			output.collect(TargetId, new DoubleWritable(dist+Double.parseDouble(neighbors.get(i+1)) ));
         		}
         	}
         }
@@ -231,7 +231,7 @@ public class SSSP
         String query = args[2];
         
         //step 1
-        JobConf conf0 = new JobConf(SSSP.class);
+        JobConf conf0 = new JobConf(SSSP_weighted.class);
         conf0.setJobName("SSSP Step1");
         //set argument
         conf0.set("sourceID", query);
@@ -274,8 +274,8 @@ public class SSSP
     	conf2.setInputFormat(TextInputFormat.class);
  		conf2.setOutputFormat(TextOutputFormat.class);
  		
- 		JobConf conf = new JobConf(SSSP.class);
- 		conf.setJobName("SSSP");
+ 		JobConf conf = new JobConf(SSSP_weighted.class);
+ 		conf.setJobName("SSSP_weighted");
  		conf.setLoopInputOutput(SSSPLoopInputOutput.class);
         conf.setLoopReduceCacheSwitch(SSSPReduceCacheSwitch.class);
         conf.setLoopReduceCacheFilter(SSSPReduceCacheFilter.class);
