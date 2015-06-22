@@ -19,10 +19,6 @@ public class RankReduceCacheFilter implements LoopReduceCacheFilter {
         @Override
         public boolean isCache(Object key, Object value, int count) {
         	Text valueText = (Text)value;
-        	System.out.println("iscache");
-        	System.out.println((IntWritable)key);
-        	System.out.println(valueText);
-        	
         	if (valueText.toString().endsWith("RANK")){
         		System.out.println("no");
         		return false;

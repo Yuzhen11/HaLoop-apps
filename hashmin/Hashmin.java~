@@ -222,6 +222,8 @@ public class Hashmin
     	
         String inputPath = args[0];
         String outputPath = args[1];
+        int specIteration = Integer.parseInt(args[2]);
+        
         //step 1
         JobConf conf0 = new JobConf(Hashmin.class);
         conf0.setJobName("hashmin Step1");
@@ -274,7 +276,7 @@ public class Hashmin
         conf.setOutputPath(outputPath);
         
         
-        int specIteration = 2;
+        
  		conf.setStepConf(0, conf1);
         conf.setStepConf(1, conf2);
         conf.setIterative(true);

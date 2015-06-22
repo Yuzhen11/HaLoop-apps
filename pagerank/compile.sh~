@@ -2,7 +2,9 @@ haloop com.sun.tools.javac.Main PageRank.java
 
 jar cf pr.jar *.class
 
-haloop jar pr.jar PageRank /yuzhen/toy/ /yuzhen/output
+haloop jar pr.jar PageRank /yuzhen/toytest/ /yuzhen/output 2
+## iteration number = pregel iteration number - 2
+
 
 haloop fs -rmr /yuzhen/output
 

@@ -33,18 +33,12 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 
 public class PageRank
 {
-	public static final String EGDE = "EDGE ";
-	public static final String RANK = "RANK";
-
-	
 	
 	public static class JoinMapper extends MapReduceBase implements
 			Mapper<Object, Text, IntWritable, Text> {
 	
 		public void map(Object key, Text value, OutputCollector<IntWritable, Text> output, Reporter reporter) throws IOException {
 			
-			//vid neighbors_num n1 n2 ...
-			//vid rank
 			String[] tokens = value.toString().split("\\s+");
 			IntWritable SourceId = new IntWritable(Integer.parseInt(tokens[0]));
 			System.out.println("!");
@@ -63,34 +57,11 @@ public class PageRank
             Reducer<IntWritable, Text, IntWritable, Text> { 			
             
         public void reduce(IntWritable key, Iterator<Text> values, OutputCollector<IntWritable, Text> output, Reporter reporter) throws IOException {
-        	
-        	float myRank = 0.0f;
-        	ArrayList<String> neighbors = new ArrayList<String>();
+
         	while (values.hasNext()){
-        		String str = values.next().toString();
-        		System.out.println("~");
-        		System.out.println(key);
-        		System.out.println(str);
-        		if (str.endsWith(RANK)){
-        			//rank table
-        			myRank = Float.parseFloat(str.substring(0, str.length()-4));
-        		}
-        		else{
-        			//adj table
-        			System.out.println("add adj!!!");
-        			String[] tmp = str.split("\\s+");
-        			for (String i : tmp)
-	        			neighbors.add(i);
-        		}
+        		String str = values.next().toString();        		
+    			output.collect(key, new Text(str));
         	}
-        	System.out.println("load done");
-        	
-        	StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < neighbors.size(); i++){
-				if (sb.length() != 0) sb.append(" ");
-				sb.append(neighbors.get(i));
-			}
-			output.collect(key, new Text(sb.toString()));
         }
     }
     

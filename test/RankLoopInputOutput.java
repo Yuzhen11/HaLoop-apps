@@ -15,7 +15,6 @@ public class RankLoopInputOutput implements LoopInputOutput {
                         paths.add(conf.getInputPath());
                 }
                 paths.add("/yuzhen/tmp");
-                //if (step == 0) paths.add(conf.getInputPath());
                 
                 return paths;
         }

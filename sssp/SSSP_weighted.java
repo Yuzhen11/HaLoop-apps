@@ -128,6 +128,8 @@ public class SSSP_weighted
 	        			neighbors.add(i);
         		}
         	}
+        	
+        	if (neighbors.size() == 0) return;
         	int num = Integer.parseInt(neighbors.get(0));
         	if (num == 0) return;
         	

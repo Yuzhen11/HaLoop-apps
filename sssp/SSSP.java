@@ -128,6 +128,8 @@ public class SSSP
 	        			neighbors.add(i);
         		}
         	}
+        	
+        	if (neighbors.size() == 0) return;
         	int num = Integer.parseInt(neighbors.get(0));
         	if (num == 0) return;
         	
@@ -229,6 +231,7 @@ public class SSSP
         String inputPath = args[0];
         String outputPath = args[1];
         String query = args[2];
+        int specIteration = Integer.parseInt(args[3]);
         
         //step 1
         JobConf conf0 = new JobConf(SSSP.class);
@@ -284,7 +287,7 @@ public class SSSP
         conf.setOutputPath(outputPath);
         
         
-        int specIteration = 2;
+        
  		conf.setStepConf(0, conf1);
         conf.setStepConf(1, conf2);
         conf.setIterative(true);

@@ -33,7 +33,6 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 
 public class PageRank
 {
-	public static final String EGDE = "EDGE ";
 	public static final String RANK = "RANK";
 	
 	public static class FirstMapper extends MapReduceBase implements
@@ -66,13 +65,10 @@ public class PageRank
 			//vid rank
 			String[] tokens = value.toString().split("\\s+");
 			IntWritable SourceId = new IntWritable(Integer.parseInt(tokens[0]));
-			System.out.println("!");
-			System.out.println(tokens[0]);
 			StringBuilder sb = new StringBuilder();
 			for (int i = 1; i < tokens.length; i++){
 				if (sb.length() != 0) sb.append(" ");
 				sb.append(tokens[i]);
-				System.out.println(tokens[i]);
 			}
 			output.collect(SourceId, new Text(sb.toString()));
 		}
@@ -87,22 +83,17 @@ public class PageRank
         	ArrayList<String> neighbors = new ArrayList<String>();
         	while (values.hasNext()){
         		String str = values.next().toString();
-        		System.out.println("~");
-        		System.out.println(key);
-        		System.out.println(str);
         		if (str.endsWith(RANK)){
         			//rank table
         			myRank = Float.parseFloat(str.substring(0, str.length()-4));
         		}
         		else{
         			//adj table
-        			System.out.println("add adj!!!");
         			String[] tmp = str.split("\\s+");
         			for (String i : tmp)
 	        			neighbors.add(i);
         		}
         	}
-        	System.out.println("load done");
         	int num = Integer.parseInt(neighbors.get(0));
         	if (num == 0) return;
         	
@@ -193,6 +184,7 @@ public class PageRank
     	
         String inputPath = args[0];
         String outputPath = args[1];
+        int specIteration = Integer.parseInt(args[2]);
         //step 1
         JobConf conf0 = new JobConf(PageRank.class);
         conf0.setJobName("PageRank Step1");
@@ -244,7 +236,7 @@ public class PageRank
         conf.setOutputPath(outputPath);
         
         
-        int specIteration = 4;
+        
  		conf.setStepConf(0, conf1);
         conf.setStepConf(1, conf2);
         conf.setIterative(true);

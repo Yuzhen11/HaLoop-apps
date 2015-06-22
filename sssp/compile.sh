@@ -2,7 +2,9 @@ haloop com.sun.tools.javac.Main SSSP.java
 
 jar cf SSSP.jar *.class
 
-haloop jar SSSP.jar SSSP /yuzhen/toytest/ /yuzhen/output 2
+haloop jar SSSP.jar SSSP /yuzhen/toytest/ /yuzhen/output 2 3
+#input_path output_path src iteration
+## iteration number = pregel iteration number - 1
 
 haloop fs -rmr /yuzhen/output
 
